@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>⚔️ Knight's Ascent</title>
     <style>
         * {
@@ -13,18 +13,40 @@
         }
 
         body {
-            font-family: 'Press Start 2P', -apple-system, monospace;
-            background: #0a0a0a;
+            font-family: 'Courier New', monospace;
+            background: #000;
             color: #fff;
             overflow: hidden;
             touch-action: none;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Force landscape */
+        @media (orientation: portrait) {
+            body::before {
+                content: "↻ ROTATE YOUR DEVICE ↻";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2em;
+                z-index: 9999;
+                color: #FFD700;
+            }
         }
 
         #gameCanvas {
             display: block;
-            width: 100%;
+            width: 100vw;
             height: 100vh;
-            background: #1a1a1a;
+            background: #000;
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             image-rendering: crisp-edges;
@@ -36,12 +58,13 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100vh;
+            height: 100%;
             background: linear-gradient(135deg, #1a0000 0%, #0a0a0a 100%);
             justify-content: center;
             align-items: center;
             flex-direction: column;
             z-index: 100;
+            overflow-y: auto;
         }
 
         .screen.active {
@@ -49,65 +72,58 @@
         }
 
         .title {
-            font-size: 2.5em;
-            margin-bottom: 40px;
-            text-shadow: 4px 4px 0 #8B0000;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 0 #8B0000;
+            color: #FFD700;
+            font-weight: bold;
         }
 
         .menu-btn, .custom-btn {
             background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
-            border: 4px solid #FFD700;
+            border: 3px solid #FFD700;
             color: #FFD700;
-            padding: 20px 40px;
-            font-size: 1.2em;
-            margin: 10px;
+            padding: 15px 30px;
+            font-size: 1em;
+            margin: 8px;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            font-weight: bold;
             text-transform: uppercase;
         }
 
-        .menu-btn:hover, .custom-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.7);
-            background: linear-gradient(135deg, #DC143C 0%, #FF4500 100%);
-        }
-
         .menu-btn:active {
-            transform: translateY(0);
+            transform: scale(0.95);
+            background: linear-gradient(135deg, #DC143C 0%, #FF4500 100%);
         }
 
         .customize-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            max-width: 800px;
+            gap: 15px;
+            max-width: 90%;
             padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
         }
 
         .custom-option {
             background: rgba(139, 0, 0, 0.3);
             border: 2px solid #FFD700;
-            padding: 15px;
-            text-align: center;
+            padding: 10px;
         }
 
         .custom-option h3 {
-            font-size: 0.9em;
-            margin-bottom: 10px;
+            font-size: 0.8em;
+            margin-bottom: 8px;
             color: #FFD700;
         }
 
         .custom-btn {
-            padding: 10px 20px;
-            font-size: 0.8em;
-            margin: 5px;
+            padding: 8px 15px;
+            font-size: 0.7em;
+            margin: 3px;
+            width: 100%;
         }
 
         .custom-btn.selected {
@@ -117,27 +133,31 @@
 
         #controls {
             position: fixed;
-            bottom: 20px;
+            bottom: 10px;
             width: 100%;
-            display: flex;
+            display: none;
             justify-content: space-between;
-            padding: 0 20px;
+            padding: 0 10px;
             z-index: 50;
+        }
+
+        #controls.active {
+            display: flex;
         }
 
         .control-group {
             display: flex;
-            gap: 10px;
+            gap: 5px;
         }
 
         .control-btn {
-            width: 80px;
-            height: 80px;
-            background: rgba(139, 0, 0, 0.8);
-            border: 3px solid #FFD700;
-            border-radius: 10px;
+            width: 70px;
+            height: 70px;
+            background: rgba(139, 0, 0, 0.9);
+            border: 2px solid #FFD700;
+            border-radius: 8px;
             color: #FFD700;
-            font-size: 0.8em;
+            font-size: 0.7em;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -149,12 +169,12 @@
 
         .control-btn:active {
             background: rgba(220, 20, 60, 0.9);
-            transform: scale(0.95);
+            transform: scale(0.9);
         }
 
         #hud {
             position: fixed;
-            top: 20px;
+            top: 10px;
             width: 100%;
             display: none;
             z-index: 50;
@@ -167,15 +187,15 @@
         .health-container {
             display: flex;
             justify-content: space-between;
-            padding: 0 20px;
-            margin-bottom: 10px;
+            padding: 0 10px;
+            margin-bottom: 5px;
         }
 
         .health-bar {
-            width: 40%;
-            height: 30px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 3px solid #FFD700;
+            width: 35%;
+            height: 25px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #FFD700;
             position: relative;
         }
 
@@ -189,35 +209,33 @@
             position: absolute;
             width: 100%;
             text-align: center;
-            line-height: 30px;
-            font-size: 0.8em;
+            line-height: 25px;
+            font-size: 0.7em;
             color: #FFD700;
+            font-weight: bold;
         }
 
         #levelInfo {
             text-align: center;
-            font-size: 1em;
+            font-size: 0.9em;
             color: #FFD700;
+            font-weight: bold;
             text-shadow: 2px 2px 0 #000;
         }
 
-        .gore-toggle {
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
+        .back-btn {
+            background: #555;
             border: 2px solid #FFD700;
-            font-size: 0.7em;
             color: #FFD700;
+            padding: 12px 25px;
+            font-size: 0.9em;
+            margin-top: 15px;
             cursor: pointer;
-            z-index: 50;
+            font-weight: bold;
         }
 
-        @media (max-width: 768px) {
-            .title { font-size: 1.5em; }
-            .menu-btn { font-size: 0.8em; padding: 15px 30px; }
-            .control-btn { width: 60px; height: 60px; font-size: 0.7em; }
+        .back-btn:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -225,43 +243,40 @@
     <!-- Main Menu -->
     <div id="mainMenu" class="screen active">
         <h1 class="title">⚔️ KNIGHT'S ASCENT ⚔️</h1>
-        <button class="menu-btn" onclick="game.showCustomize()">⚔️ CUSTOMIZE KNIGHT</button>
-        <button class="menu-btn" onclick="game.startGame()">🗡️ START CAMPAIGN</button>
-        <button class="menu-btn" onclick="game.showOptions()">⚙️ OPTIONS</button>
+        <button class="menu-btn" onclick="game.showCustomize()">CUSTOMIZE KNIGHT</button>
+        <button class="menu-btn" onclick="game.startGame()">START CAMPAIGN</button>
+        <button class="menu-btn" onclick="game.showOptions()">OPTIONS</button>
     </div>
 
     <!-- Customize Screen -->
     <div id="customizeScreen" class="screen">
-        <h1 class="title">CUSTOMIZE YOUR KNIGHT</h1>
+        <h1 class="title">CUSTOMIZE KNIGHT</h1>
         <div class="customize-grid">
             <div class="custom-option">
                 <h3>ARMOR TYPE</h3>
-                <button class="custom-btn" onclick="game.setCustom('armor', 'templar')">TEMPLAR</button>
-                <button class="custom-btn" onclick="game.setCustom('armor', 'dark')">DARK KNIGHT</button>
-                <button class="custom-btn" onclick="game.setCustom('armor', 'gold')">GOLDEN</button>
-                <button class="custom-btn" onclick="game.setCustom('armor', 'dragon')">DRAGON SLAYER</button>
+                <button class="custom-btn" data-custom="armor-templar" onclick="game.setCustom('armor', 'templar')">TEMPLAR</button>
+                <button class="custom-btn" data-custom="armor-dark" onclick="game.setCustom('armor', 'dark')">DARK</button>
+                <button class="custom-btn" data-custom="armor-gold" onclick="game.setCustom('armor', 'gold')">GOLD</button>
             </div>
             <div class="custom-option">
                 <h3>SWORD TYPE</h3>
-                <button class="custom-btn" onclick="game.setCustom('sword', 'one')">ONE-HANDED</button>
-                <button class="custom-btn" onclick="game.setCustom('sword', 'two')">TWO-HANDED</button>
+                <button class="custom-btn" data-custom="sword-one" onclick="game.setCustom('sword', 'one')">ONE-HANDED</button>
+                <button class="custom-btn" data-custom="sword-two" onclick="game.setCustom('sword', 'two')">TWO-HANDED</button>
             </div>
             <div class="custom-option">
                 <h3>ARMOR COLOR</h3>
-                <button class="custom-btn" onclick="game.setCustom('color', 'silver')">SILVER</button>
-                <button class="custom-btn" onclick="game.setCustom('color', 'gold')">GOLD</button>
-                <button class="custom-btn" onclick="game.setCustom('color', 'black')">BLACK</button>
-                <button class="custom-btn" onclick="game.setCustom('color', 'red')">RED</button>
+                <button class="custom-btn" data-custom="color-silver" onclick="game.setCustom('color', 'silver')">SILVER</button>
+                <button class="custom-btn" data-custom="color-black" onclick="game.setCustom('color', 'black')">BLACK</button>
+                <button class="custom-btn" data-custom="color-red" onclick="game.setCustom('color', 'red')">RED</button>
             </div>
             <div class="custom-option">
                 <h3>CAPE COLOR</h3>
-                <button class="custom-btn" onclick="game.setCustom('cape', 'red')">RED</button>
-                <button class="custom-btn" onclick="game.setCustom('cape', 'blue')">BLUE</button>
-                <button class="custom-btn" onclick="game.setCustom('cape', 'purple')">PURPLE</button>
-                <button class="custom-btn" onclick="game.setCustom('cape', 'black')">BLACK</button>
+                <button class="custom-btn" data-custom="cape-red" onclick="game.setCustom('cape', 'red')">RED</button>
+                <button class="custom-btn" data-custom="cape-blue" onclick="game.setCustom('cape', 'blue')">BLUE</button>
+                <button class="custom-btn" data-custom="cape-black" onclick="game.setCustom('cape', 'black')">BLACK</button>
             </div>
         </div>
-        <button class="menu-btn" onclick="game.showMenu()">⬅️ BACK</button>
+        <button class="back-btn" onclick="game.showMenu()">⬅ BACK TO MENU</button>
     </div>
 
     <!-- Options Screen -->
@@ -270,23 +285,20 @@
         <div class="customize-grid">
             <div class="custom-option">
                 <h3>GORE MODE</h3>
-                <button class="custom-btn" onclick="game.setGore(true)">ENABLED 🩸</button>
-                <button class="custom-btn" onclick="game.setGore(false)">DISABLED</button>
+                <button class="custom-btn" data-custom="gore-on" onclick="game.setGore(true)">ENABLED 🩸</button>
+                <button class="custom-btn" data-custom="gore-off" onclick="game.setGore(false)">DISABLED</button>
             </div>
             <div class="custom-option">
                 <h3>DIFFICULTY</h3>
-                <button class="custom-btn" onclick="game.setDifficulty('normal')">NORMAL</button>
-                <button class="custom-btn" onclick="game.setDifficulty('hard')">HARD</button>
-                <button class="custom-btn" onclick="game.setDifficulty('brutal')">BRUTAL</button>
+                <button class="custom-btn" data-custom="diff-normal" onclick="game.setDifficulty('normal')">NORMAL</button>
+                <button class="custom-btn" data-custom="diff-hard" onclick="game.setDifficulty('hard')">HARD</button>
             </div>
         </div>
-        <button class="menu-btn" onclick="game.showMenu()">⬅️ BACK</button>
+        <button class="back-btn" onclick="game.showMenu()">⬅ BACK TO MENU</button>
     </div>
 
-    <!-- Game Canvas -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- HUD -->
     <div id="hud">
         <div class="health-container">
             <div class="health-bar">
@@ -301,16 +313,15 @@
         <div id="levelInfo">LEVEL 1: FIELD BATTLE</div>
     </div>
 
-    <!-- Controls -->
     <div id="controls">
         <div class="control-group">
-            <div class="control-btn" id="leftBtn">←</div>
-            <div class="control-btn" id="rightBtn">→</div>
+            <div class="control-btn" id="leftBtn">←<br>LEFT</div>
+            <div class="control-btn" id="rightBtn">→<br>RIGHT</div>
         </div>
         <div class="control-group">
-            <div class="control-btn" id="blockBtn">🛡️<br>BLOCK</div>
-            <div class="control-btn" id="dodgeBtn">↔️<br>DODGE</div>
-            <div class="control-btn" id="attackBtn">⚔️<br>ATTACK</div>
+            <div class="control-btn" id="blockBtn">🛡<br>BLOCK</div>
+            <div class="control-btn" id="dodgeBtn">↔<br>DODGE</div>
+            <div class="control-btn" id="attackBtn">⚔<br>ATTACK</div>
         </div>
     </div>
 
@@ -327,31 +338,96 @@
             gore: true,
             difficulty: 'normal',
             currentLevel: 0,
-            player: { x: 150, y: 400, health: 100, maxHealth: 100, stamina: 100, isBlocking: false, isAttacking: false, isDodging: false },
-            enemy: { x: 650, y: 400, health: 100, maxHealth: 100, isBlocking: false, isAttacking: false },
+            player: { 
+                x: 150, y: 0, 
+                health: 100, maxHealth: 100, 
+                stamina: 100,
+                isBlocking: false, 
+                isAttacking: false, 
+                isDodging: false,
+                attackFrame: 0,
+                facing: 1
+            },
+            enemy: { 
+                x: 650, y: 0,
+                health: 100, maxHealth: 100,
+                isBlocking: false, 
+                isAttacking: false,
+                attackFrame: 0,
+                facing: -1,
+                aiTimer: 0
+            },
             blood: [],
-            keys: {},
             gameRunning: false,
+            backgrounds: {},
+            groundY: 0,
 
             levels: [
-                { name: 'FIELD BATTLE', bg: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/a479852528778d342fc3039cfcbfe12f', enemy: 'Peasant Knight', difficulty: 1 },
-                { name: 'VILLAGE SQUARE', bg: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/a2662d71b32b1a6ad73d78db07098e8b', enemy: 'Town Guard', difficulty: 1.3 },
-                { name: 'CASTLE COURTYARD', bg: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/11091d5c1a0be80919b4d87957931056', enemy: 'Royal Knight', difficulty: 1.6 },
-                { name: 'THRONE ROOM', bg: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/224003a466ee5c1e77e35c25c4618664', enemy: 'THE KING', difficulty: 2 }
+                { 
+                    name: 'FIELD BATTLE', 
+                    bgUrl: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/a479852528778d342fc3039cfcbfe12f',
+                    enemy: 'Peasant', 
+                    difficulty: 1 
+                },
+                { 
+                    name: 'VILLAGE SQUARE', 
+                    bgUrl: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/a2662d71b32b1a6ad73d78db07098e8b',
+                    enemy: 'Guard', 
+                    difficulty: 1.3 
+                },
+                { 
+                    name: 'CASTLE COURTYARD', 
+                    bgUrl: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/11091d5c1a0be80919b4d87957931056',
+                    enemy: 'Knight', 
+                    difficulty: 1.6 
+                },
+                { 
+                    name: 'THRONE ROOM', 
+                    bgUrl: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/224003a466ee5c1e77e35c25c4618664',
+                    enemy: 'THE KING', 
+                    difficulty: 2 
+                }
             ],
 
             init() {
                 this.canvas = document.getElementById('gameCanvas');
                 this.ctx = this.canvas.getContext('2d');
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
                 this.setupControls();
                 this.loadCustomization();
+                this.loadBackgrounds();
+            },
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.groundY = this.canvas.height - 150;
+                this.player.y = this.groundY - 80;
+                this.enemy.y = this.groundY - 80;
+            },
+
+            loadBackgrounds() {
+                this.levels.forEach((level, i) => {
+                    const img = new Image();
+                    img.crossOrigin = "anonymous";
+                    img.src = level.bgUrl;
+                    img.onload = () => {
+                        this.backgrounds[i] = img;
+                        console.log(`Level ${i+1} background loaded`);
+                    };
+                    img.onerror = () => {
+                        console.log(`Level ${i+1} background failed, using fallback`);
+                        this.backgrounds[i] = null;
+                    };
+                });
             },
 
             showMenu() {
                 document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
                 document.getElementById('mainMenu').classList.add('active');
+                document.getElementById('hud').classList.remove('active');
+                document.getElementById('controls').classList.remove('active');
                 this.gameRunning = false;
             },
 
@@ -364,6 +440,7 @@
             showOptions() {
                 document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
                 document.getElementById('optionsScreen').classList.add('active');
+                this.updateCustomButtons();
             },
 
             setCustom(type, value) {
@@ -375,15 +452,25 @@
             setGore(enabled) {
                 this.gore = enabled;
                 localStorage.setItem('gore', enabled);
+                this.updateCustomButtons();
             },
 
             setDifficulty(diff) {
                 this.difficulty = diff;
                 localStorage.setItem('difficulty', diff);
+                this.updateCustomButtons();
             },
 
             updateCustomButtons() {
-                document.querySelectorAll('.custom-btn').forEach(btn => btn.classList.remove('selected'));
+                document.querySelectorAll('.custom-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                document.querySelectorAll(`[data-custom="armor-${this.customization.armor}"]`).forEach(b => b.classList.add('selected'));
+                document.querySelectorAll(`[data-custom="sword-${this.customization.sword}"]`).forEach(b => b.classList.add('selected'));
+                document.querySelectorAll(`[data-custom="color-${this.customization.color}"]`).forEach(b => b.classList.add('selected'));
+                document.querySelectorAll(`[data-custom="cape-${this.customization.cape}"]`).forEach(b => b.classList.add('selected'));
+                document.querySelectorAll(`[data-custom="gore-${this.gore ? 'on' : 'off'}"]`).forEach(b => b.classList.add('selected'));
+                document.querySelectorAll(`[data-custom="diff-${this.difficulty}"]`).forEach(b => b.classList.add('selected'));
             },
 
             saveCustomization() {
@@ -406,12 +493,16 @@
                 this.currentLevel = level;
                 this.player.health = this.player.maxHealth;
                 this.enemy.health = this.enemy.maxHealth;
-                this.enemy.x = this.canvas.width - 200;
                 this.player.x = 150;
+                this.enemy.x = this.canvas.width - 200;
+                this.player.y = this.groundY - 80;
+                this.enemy.y = this.groundY - 80;
                 this.blood = [];
+                this.enemy.aiTimer = 0;
 
                 document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
                 document.getElementById('hud').classList.add('active');
+                document.getElementById('controls').classList.add('active');
                 document.getElementById('levelInfo').textContent = `LEVEL ${level + 1}: ${this.levels[level].name}`;
 
                 this.gameRunning = true;
@@ -419,52 +510,72 @@
             },
 
             setupControls() {
-                // Touch controls
-                ['left', 'right', 'attack', 'block', 'dodge'].forEach(action => {
-                    const btn = document.getElementById(action + 'Btn');
-                    if (btn) {
-                        btn.addEventListener('touchstart', (e) => {
-                            e.preventDefault();
-                            this.handleAction(action, true);
-                        });
-                        btn.addEventListener('touchend', (e) => {
-                            e.preventDefault();
-                            this.handleAction(action, false);
-                        });
-                    }
+                const actions = {
+                    'leftBtn': 'left',
+                    'rightBtn': 'right',
+                    'attackBtn': 'attack',
+                    'blockBtn': 'block',
+                    'dodgeBtn': 'dodge'
+                };
+
+                Object.keys(actions).forEach(btnId => {
+                    const btn = document.getElementById(btnId);
+                    const action = actions[btnId];
+
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.handleAction(action, true);
+                    });
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        this.handleAction(action, false);
+                    });
+                    btn.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        this.handleAction(action, true);
+                    });
+                    btn.addEventListener('mouseup', (e) => {
+                        e.preventDefault();
+                        this.handleAction(action, false);
+                    });
                 });
 
                 // Keyboard
                 window.addEventListener('keydown', (e) => {
-                    if (e.key === 'a') this.handleAction('left', true);
-                    if (e.key === 'd') this.handleAction('right', true);
-                    if (e.key === ' ') this.handleAction('attack', true);
-                    if (e.key === 's') this.handleAction('block', true);
-                    if (e.key === 'w') this.handleAction('dodge', true);
+                    if (e.key === 'ArrowLeft' || e.key === 'a') this.handleAction('left', true);
+                    if (e.key === 'ArrowRight' || e.key === 'd') this.handleAction('right', true);
+                    if (e.key === ' ' || e.key === 'j') this.handleAction('attack', true);
+                    if (e.key === 'ArrowDown' || e.key === 's') this.handleAction('block', true);
+                    if (e.key === 'ArrowUp' || e.key === 'w') this.handleAction('dodge', true);
                 });
 
                 window.addEventListener('keyup', (e) => {
-                    if (e.key === 'a') this.handleAction('left', false);
-                    if (e.key === 'd') this.handleAction('right', false);
-                    if (e.key === 's') this.handleAction('block', false);
+                    if (e.key === 'ArrowLeft' || e.key === 'a') this.handleAction('left', false);
+                    if (e.key === 'ArrowRight' || e.key === 'd') this.handleAction('right', false);
+                    if (e.key === 'ArrowDown' || e.key === 's') this.handleAction('block', false);
                 });
             },
 
             handleAction(action, pressed) {
                 if (!this.gameRunning) return;
+                const speed = 5;
 
                 switch(action) {
                     case 'left':
-                        if (pressed && this.player.x > 50) this.player.x -= 10;
+                        if (pressed && this.player.x > 50 && !this.player.isAttacking) {
+                            this.player.x -= speed;
+                        }
                         break;
                     case 'right':
-                        if (pressed && this.player.x < this.canvas.width / 2) this.player.x += 10;
+                        if (pressed && this.player.x < this.canvas.width / 2 && !this.player.isAttacking) {
+                            this.player.x += speed;
+                        }
                         break;
                     case 'attack':
                         if (pressed && !this.player.isAttacking) {
                             this.player.isAttacking = true;
+                            this.player.attackFrame = 10;
                             this.playerAttack();
-                            setTimeout(() => this.player.isAttacking = false, 300);
                         }
                         break;
                     case 'block':
@@ -473,8 +584,9 @@
                     case 'dodge':
                         if (pressed && !this.player.isDodging) {
                             this.player.isDodging = true;
-                            this.player.x += 50;
-                            setTimeout(() => this.player.isDodging = false, 200);
+                            const dodgeDir = (this.player.x < this.canvas.width / 2) ? 1 : -1;
+                            this.player.x += 40 * dodgeDir;
+                            setTimeout(() => this.player.isDodging = false, 250);
                         }
                         break;
                 }
@@ -482,13 +594,13 @@
 
             playerAttack() {
                 const distance = Math.abs(this.player.x - this.enemy.x);
-                const range = this.customization.sword === 'two' ? 120 : 80;
+                const range = this.customization.sword === 'two' ? 140 : 100;
 
                 if (distance < range) {
                     if (!this.enemy.isBlocking) {
-                        const damage = this.customization.sword === 'two' ? 15 : 10;
-                        this.enemy.health -= damage;
-                        this.addBlood(this.enemy.x, this.enemy.y);
+                        const baseDmg = this.customization.sword === 'two' ? 18 : 12;
+                        this.enemy.health -= baseDmg;
+                        this.addBlood(this.enemy.x - 20, this.enemy.y + 20);
                         this.updateHealthBars();
                     }
                 }
@@ -497,32 +609,40 @@
             enemyAI() {
                 if (!this.gameRunning) return;
 
+                this.enemy.aiTimer++;
+                if (this.enemy.aiTimer < 30) return;
+                this.enemy.aiTimer = 0;
+
                 const distance = Math.abs(this.player.x - this.enemy.x);
                 const levelDiff = this.levels[this.currentLevel].difficulty;
 
-                // Simple AI logic
-                if (distance > 100) {
-                    this.enemy.x -= 2 * levelDiff;
+                if (distance > 120) {
+                    this.enemy.x -= 3;
                 } else {
-                    // Random attack or block
                     const action = Math.random();
-                    if (action < 0.3 * levelDiff && !this.enemy.isAttacking) {
+                    if (action < 0.25 * levelDiff && !this.enemy.isAttacking) {
                         this.enemy.isAttacking = true;
+                        this.enemy.attackFrame = 10;
                         this.enemyAttack();
-                        setTimeout(() => this.enemy.isAttacking = false, 300);
-                    } else if (action < 0.5 * levelDiff) {
+                        setTimeout(() => {
+                            this.enemy.isAttacking = false;
+                        }, 400);
+                    } else if (action < 0.45 * levelDiff) {
                         this.enemy.isBlocking = true;
-                        setTimeout(() => this.enemy.isBlocking = false, 500);
+                        setTimeout(() => {
+                            this.enemy.isBlocking = false;
+                        }, 600);
                     }
                 }
             },
 
             enemyAttack() {
                 const distance = Math.abs(this.player.x - this.enemy.x);
-                if (distance < 100) {
+                if (distance < 110) {
                     if (!this.player.isBlocking && !this.player.isDodging) {
-                        this.player.health -= 12;
-                        this.addBlood(this.player.x, this.player.y);
+                        const dmg = 10 + (this.levels[this.currentLevel].difficulty * 3);
+                        this.player.health -= dmg;
+                        this.addBlood(this.player.x + 20, this.player.y + 20);
                         this.updateHealthBars();
                     }
                 }
@@ -530,20 +650,23 @@
 
             addBlood(x, y) {
                 if (!this.gore) return;
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < 8; i++) {
                     this.blood.push({
-                        x: x + Math.random() * 20 - 10,
-                        y: y + Math.random() * 20 - 10,
-                        vx: Math.random() * 4 - 2,
-                        vy: -Math.random() * 3,
-                        life: 60
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 6,
+                        vy: -Math.random() * 5 - 2,
+                        life: 80,
+                        size: Math.random() * 4 + 2
                     });
                 }
             },
 
             updateHealthBars() {
-                document.getElementById('playerHealth').style.width = (this.player.health / this.player.maxHealth * 100) + '%';
-                document.getElementById('enemyHealth').style.width = (this.enemy.health / this.enemy.maxHealth * 100) + '%';
+                const pPct = Math.max(0, this.player.health / this.player.maxHealth * 100);
+                const ePct = Math.max(0, this.enemy.health / this.enemy.maxHealth * 100);
+                document.getElementById('playerHealth').style.width = pPct + '%';
+                document.getElementById('enemyHealth').style.width = ePct + '%';
 
                 if (this.player.health <= 0) {
                     this.gameOver(false);
@@ -555,97 +678,214 @@
             gameOver(won) {
                 this.gameRunning = false;
                 setTimeout(() => {
-                    alert(won ? 'VICTORY! You defeated all enemies!' : 'DEFEAT! Try again, warrior!');
+                    alert(won ? '⚔️ VICTORY! You defeated The King!' : '💀 DEFEAT! Train harder, warrior!');
                     this.showMenu();
-                }, 500);
+                }, 600);
             },
 
             levelComplete() {
                 this.gameRunning = false;
                 setTimeout(() => {
                     if (this.currentLevel < this.levels.length - 1) {
-                        alert(`Level ${this.currentLevel + 1} Complete! Prepare for the next battle!`);
+                        alert(`✅ Level ${this.currentLevel + 1} Complete!\nPreparing next battle...`);
                         this.loadLevel(this.currentLevel + 1);
                     } else {
                         this.gameOver(true);
                     }
-                }, 500);
+                }, 600);
+            },
+
+            drawKnight(x, y, color, isPlayer, isAttacking, isBlocking, attackFrame) {
+                const ctx = this.ctx;
+
+                // Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(x - 20, this.groundY + 5, 40, 8);
+
+                // Get color
+                let armorColor = '#c0c0c0';
+                if (color === 'black') armorColor = '#2a2a2a';
+                if (color === 'red') armorColor = '#8B0000';
+                if (color === 'silver') armorColor = '#c0c0c0';
+
+                // Legs
+                ctx.fillStyle = armorColor;
+                ctx.fillRect(x - 12, y + 40, 10, 30);
+                ctx.fillRect(x + 2, y + 40, 10, 30);
+
+                // Body/Torso
+                ctx.fillStyle = armorColor;
+                ctx.fillRect(x - 18, y + 15, 36, 30);
+
+                // Cape
+                const capeColors = {red: '#DC143C', blue: '#0047AB', black: '#1a1a1a'};
+                ctx.fillStyle = capeColors[this.customization.cape] || '#DC143C';
+                if (isPlayer) {
+                    ctx.fillRect(x - 22, y + 18, 8, 25);
+                } else {
+                    ctx.fillRect(x + 14, y + 18, 8, 25);
+                }
+
+                // Arms
+                ctx.fillStyle = armorColor;
+                if (isBlocking) {
+                    // Blocking pose
+                    ctx.fillRect(x - 22, y + 20, 8, 20);
+                    ctx.fillRect(x + 14, y + 20, 8, 20);
+                } else if (isAttacking && attackFrame > 0) {
+                    // Attack pose
+                    const ext = isPlayer ? 15 : -15;
+                    ctx.fillRect(x + ext, y + 18, 8, 22);
+                    ctx.fillRect(x - 8, y + 22, 8, 18);
+                } else {
+                    // Normal
+                    ctx.fillRect(x - 22, y + 22, 8, 20);
+                    ctx.fillRect(x + 14, y + 22, 8, 20);
+                }
+
+                // Helmet
+                ctx.fillStyle = '#888';
+                ctx.fillRect(x - 15, y - 5, 30, 20);
+                ctx.fillStyle = '#333';
+                ctx.fillRect(x - 10, y + 3, 20, 4);
+
+                // Sword
+                this.drawSword(x, y, isPlayer, isAttacking, attackFrame);
+            },
+
+            drawSword(x, y, isPlayer, isAttacking, attackFrame) {
+                const ctx = this.ctx;
+                const swordLength = this.customization.sword === 'two' ? 55 : 40;
+
+                ctx.fillStyle = '#c0c0c0';
+
+                if (isAttacking && attackFrame > 0) {
+                    // Sword extended during attack
+                    const dir = isPlayer ? 1 : -1;
+                    const ext = attackFrame * 2;
+                    ctx.save();
+                    ctx.translate(x + (dir * 25), y + 25);
+                    ctx.rotate((dir * -30) * Math.PI / 180);
+                    ctx.fillRect(0, 0, 6, swordLength);
+                    // Hilt
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(-3, swordLength, 12, 8);
+                    ctx.restore();
+                } else {
+                    // Sword at rest
+                    const dir = isPlayer ? 1 : -1;
+                    ctx.fillRect(x + (dir * 20), y + 25, 6, swordLength);
+                    // Hilt
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(x + (dir * 17), y + 25 + swordLength, 12, 8);
+                }
             },
 
             gameLoop() {
                 if (!this.gameRunning) return;
 
-                // Clear canvas
-                this.ctx.fillStyle = '#1a1a1a';
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                const ctx = this.ctx;
 
-                // Draw background (simplified - real game would load images)
-                this.ctx.fillStyle = '#2a5f2a';
-                this.ctx.fillRect(0, this.canvas.height - 200, this.canvas.width, 200);
+                // Clear
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-                // Draw blood
-                this.blood.forEach((drop, i) => {
-                    drop.x += drop.vx;
-                    drop.y += drop.vy;
-                    drop.vy += 0.3;
-                    drop.life--;
-
-                    if (drop.life <= 0 || drop.y > this.canvas.height) {
-                        this.blood.splice(i, 1);
-                        return;
+                // Draw background
+                if (this.backgrounds[this.currentLevel]) {
+                    try {
+                        ctx.drawImage(
+                            this.backgrounds[this.currentLevel],
+                            0, 0,
+                            this.canvas.width,
+                            this.canvas.height
+                        );
+                    } catch(e) {
+                        // Fallback gradient
+                        const grad = ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                        grad.addColorStop(0, '#4a6fa5');
+                        grad.addColorStop(0.7, '#2a5f2a');
+                        grad.addColorStop(1, '#1a3a1a');
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                     }
-
-                    this.ctx.fillStyle = `rgba(139, 0, 0, ${drop.life / 60})`;
-                    this.ctx.beginPath();
-                    this.ctx.arc(drop.x, drop.y, 3, 0, Math.PI * 2);
-                    this.ctx.fill();
-                });
-
-                // Draw player (simplified knight)
-                this.ctx.fillStyle = this.getColorCode(this.customization.color);
-                this.ctx.fillRect(this.player.x - 20, this.player.y - 60, 40, 60);
-                // Helmet
-                this.ctx.fillStyle = '#888';
-                this.ctx.fillRect(this.player.x - 15, this.player.y - 80, 30, 20);
-                // Sword
-                const swordLength = this.customization.sword === 'two' ? 50 : 35;
-                this.ctx.fillStyle = '#c0c0c0';
-                this.ctx.fillRect(this.player.x + 20, this.player.y - 60, 5, swordLength);
-
-                // Draw enemy
-                this.ctx.fillStyle = '#8B0000';
-                this.ctx.fillRect(this.enemy.x - 20, this.enemy.y - 60, 40, 60);
-                this.ctx.fillStyle = '#444';
-                this.ctx.fillRect(this.enemy.x - 15, this.enemy.y - 80, 30, 20);
-                this.ctx.fillStyle = '#c0c0c0';
-                this.ctx.fillRect(this.enemy.x - 25, this.enemy.y - 60, 5, 35);
-
-                // AI
-                if (Math.random() < 0.02) {
-                    this.enemyAI();
+                } else {
+                    // Fallback
+                    const grad = ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                    grad.addColorStop(0, '#4a6fa5');
+                    grad.addColorStop(0.7, '#2a5f2a');
+                    grad.addColorStop(1, '#1a3a1a');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 }
 
-                requestAnimationFrame(() => this.gameLoop());
-            },
+                // Ground
+                ctx.fillStyle = '#2a4a2a';
+                ctx.fillRect(0, this.groundY, this.canvas.width, this.canvas.height - this.groundY);
 
-            getColorCode(color) {
-                const colors = {
-                    'silver': '#c0c0c0',
-                    'gold': '#FFD700',
-                    'black': '#1a1a1a',
-                    'red': '#8B0000'
-                };
-                return colors[color] || '#c0c0c0';
+                // Blood
+                this.blood = this.blood.filter(drop => {
+                    drop.x += drop.vx;
+                    drop.y += drop.vy;
+                    drop.vy += 0.4;
+                    drop.life--;
+
+                    if (drop.y > this.groundY) {
+                        drop.y = this.groundY;
+                        drop.vy = 0;
+                        drop.vx *= 0.8;
+                    }
+
+                    if (drop.life > 0) {
+                        ctx.fillStyle = `rgba(139, 0, 0, ${drop.life / 80})`;
+                        ctx.beginPath();
+                        ctx.arc(drop.x, drop.y, drop.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        return true;
+                    }
+                    return false;
+                });
+
+                // Draw knights
+                this.drawKnight(
+                    this.player.x, 
+                    this.player.y, 
+                    this.customization.color,
+                    true,
+                    this.player.isAttacking,
+                    this.player.isBlocking,
+                    this.player.attackFrame
+                );
+
+                this.drawKnight(
+                    this.enemy.x, 
+                    this.enemy.y,
+                    'red',
+                    false,
+                    this.enemy.isAttacking,
+                    this.enemy.isBlocking,
+                    this.enemy.attackFrame
+                );
+
+                // Update attack frames
+                if (this.player.attackFrame > 0) {
+                    this.player.attackFrame--;
+                    if (this.player.attackFrame === 0) {
+                        this.player.isAttacking = false;
+                    }
+                }
+                if (this.enemy.attackFrame > 0) {
+                    this.enemy.attackFrame--;
+                }
+
+                // Enemy AI
+                this.enemyAI();
+
+                requestAnimationFrame(() => this.gameLoop());
             }
         };
 
         window.addEventListener('load', () => {
             game.init();
-        });
-
-        window.addEventListener('resize', () => {
-            game.canvas.width = window.innerWidth;
-            game.canvas.height = window.innerHeight;
         });
     </script>
 </body>
