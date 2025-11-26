@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Color Tap Rush</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+
+        .subtitle {
+            color: #8e8e93;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        .game-screen {
+            display: none;
+        }
+
+        .game-screen.active, .start-screen.active, .game-over-screen.active {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .combo {
+            color: #ff9500;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ff9500;
+            min-height: 30px;
+        }
+
+        .target-box {
+            background: var(--target-color, #007AFF);
+            color: var(--target-text, white);
+            padding: 60px;
+            border-radius: 20px;
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+            letter-spacing: 3px;
+        }
+
+        .target-box.pulse {
+            transform: scale(1.1);
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background: var(--btn-color, #007AFF);
+            color: var(--btn-text, white);
+            border: none;
+            padding: 30px;
+            border-radius: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            letter-spacing: 2px;
+        }
+
+        .option-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        .option-btn:active {
+            transform: translateY(0);
+        }
+
+        .start-btn, .play-again-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 20px 60px;
+            border-radius: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,122,255,0.5);
+            transition: transform 0.1s;
+            letter-spacing: 2px;
+        }
+
+        .start-btn:hover, .play-again-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .high-score {
+            color: #ffd700;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 30px 0;
+        }
+
+        .instructions {
+            text-align: left;
+            display: inline-block;
+            margin-top: 40px;
+        }
+
+        .instructions p {
+            color: #8e8e93;
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        .final-score {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .new-high-score {
+            color: #ffd700;
+            font-size: 1.3em;
+            margin: 15px 0;
+            animation: glow 1s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px #ffd700; }
+            50% { text-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700; }
+        }
+
+        .shake {
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 2em; }
+            .target-box { padding: 40px; font-size: 2em; }
+            .option-btn { padding: 25px; font-size: 1.1em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div class="start-screen active">
+            <h1>🎨 Color Tap Rush</h1>
+            <p class="subtitle">Tap the correct color as fast as you can!</p>
+            <p class="high-score">High Score: <span id="highScoreStart">0</span></p>
+            <button class="start-btn" onclick="startGame()">START GAME</button>
+            <div class="instructions">
+                <p>• Tap the color shown at the top</p>
+                <p>• Build combos for bonus points</p>
+                <p>• You have 30 seconds!</p>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="game-screen">
+            <div class="header">
+                <div>Score: <span id="score">0</span></div>
+                <div>⏱ <span id="timer">30</span>s</div>
+            </div>
+            <div class="combo" id="combo"></div>
+            <div class="target-box" id="targetBox">RED</div>
+            <div class="options" id="options"></div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div class="game-over-screen">
+            <h1>Game Over!</h1>
+            <div class="final-score" id="finalScore">0</div>
+            <div class="new-high-score" id="newHighScore" style="display:none;">🎉 NEW HIGH SCORE! 🎉</div>
+            <p class="high-score">High Score: <span id="highScoreEnd">0</span></p>
+            <button class="play-again-btn" onclick="startGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        const COLORS = [
+            { name: 'RED', bg: '#FF3B30', color: '#FFFFFF' },
+            { name: 'BLUE', bg: '#007AFF', color: '#FFFFFF' },
+            { name: 'GREEN', bg: '#34C759', color: '#FFFFFF' },
+            { name: 'YELLOW', bg: '#FFCC00', color: '#000000' },
+            { name: 'PURPLE', bg: '#AF52DE', color: '#FFFFFF' },
+            { name: 'ORANGE', bg: '#FF9500', color: '#FFFFFF' }
+        ];
+
+        let score = 0;
+        let highScore = localStorage.getItem('highScore') || 0;
+        let timeLeft = 30;
+        let combo = 0;
+        let targetColor = null;
+        let options = [];
+        let timerInterval = null;
+
+        // Load high score
+        document.getElementById('highScoreStart').textContent = highScore;
+        document.getElementById('highScoreEnd').textContent = highScore;
+
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            combo = 0;
+
+            document.querySelector('.start-screen').classList.remove('active');
+            document.querySelector('.game-over-screen').classList.remove('active');
+            document.querySelector('.game-screen').classList.add('active');
+
+            updateScore();
+            updateTimer();
+            generateRound();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function generateRound() {
+            // Pick random target
+            targetColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+
+            // Create 4 random options including the target
+            options = [];
+            let shuffled = [...COLORS].sort(() => Math.random() - 0.5);
+            options = shuffled.slice(0, 4);
+
+            // Make sure target is included
+            if (!options.find(c => c.name === targetColor.name)) {
+                options[Math.floor(Math.random() * 4)] = targetColor;
+            }
+
+            // Shuffle again
+            options.sort(() => Math.random() - 0.5);
+
+            // Update UI
+            const targetBox = document.getElementById('targetBox');
+            targetBox.textContent = targetColor.name;
+            targetBox.style.setProperty('--target-color', targetColor.bg);
+            targetBox.style.setProperty('--target-text', targetColor.color);
+
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            options.forEach(color => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = color.name;
+                btn.style.setProperty('--btn-color', color.bg);
+                btn.style.setProperty('--btn-text', color.color);
+                btn.onclick = () => handleTap(color);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function handleTap(selectedColor) {
+            if (selectedColor.name === targetColor.name) {
+                // Correct!
+                combo++;
+                const multiplier = Math.floor(combo / 3) + 1;
+                score += 10 * multiplier;
+                updateScore();
+                updateCombo();
+
+                // Animation
+                const targetBox = document.getElementById('targetBox');
+                targetBox.classList.add('pulse');
+                setTimeout(() => targetBox.classList.remove('pulse'), 100);
+
+                generateRound();
+            } else {
+                // Wrong!
+                combo = 0;
+                updateCombo();
+
+                // Shake animation
+                document.querySelector('.container').classList.add('shake');
+                setTimeout(() => document.querySelector('.container').classList.remove('shake'), 300);
+            }
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+        }
+
+        function updateTimer() {
+            document.getElementById('timer').textContent = timeLeft;
+        }
+
+        function updateCombo() {
+            const comboDiv = document.getElementById('combo');
+            if (combo >= 3) {
+                const multiplier = Math.floor(combo / 3) + 1;
+                comboDiv.textContent = `🔥 COMBO x${multiplier}`;
+            } else {
+                comboDiv.textContent = '';
+            }
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+
+            document.querySelector('.game-screen').classList.remove('active');
+            document.querySelector('.game-over-screen').classList.add('active');
+
+            document.getElementById('finalScore').textContent = score;
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+                document.getElementById('newHighScore').style.display = 'block';
+            } else {
+                document.getElementById('newHighScore').style.display = 'none';
+            }
+
+            document.getElementById('highScoreEnd').textContent = highScore;
+            document.getElementById('highScoreStart').textContent = highScore;
+        }
+    </script>
+</body>
+</html>
