@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚔️ Knight's Ascent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Press Start 2P', -apple-system, monospace;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100vh;
+            background: #1a1a1a;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        .screen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a0000 0%, #0a0a0a 100%);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .title {
+            font-size: 2.5em;
+            margin-bottom: 40px;
+            text-shadow: 4px 4px 0 #8B0000;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .menu-btn, .custom-btn {
+            background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+            border: 4px solid #FFD700;
+            color: #FFD700;
+            padding: 20px 40px;
+            font-size: 1.2em;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            text-transform: uppercase;
+        }
+
+        .menu-btn:hover, .custom-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+            background: linear-gradient(135deg, #DC143C 0%, #FF4500 100%);
+        }
+
+        .menu-btn:active {
+            transform: translateY(0);
+        }
+
+        .customize-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 800px;
+            padding: 20px;
+        }
+
+        .custom-option {
+            background: rgba(139, 0, 0, 0.3);
+            border: 2px solid #FFD700;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .custom-option h3 {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+
+        .custom-btn {
+            padding: 10px 20px;
+            font-size: 0.8em;
+            margin: 5px;
+        }
+
+        .custom-btn.selected {
+            background: #FFD700;
+            color: #8B0000;
+        }
+
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 50;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(139, 0, 0, 0.8);
+            border: 3px solid #FFD700;
+            border-radius: 10px;
+            color: #FFD700;
+            font-size: 0.8em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+            font-weight: bold;
+        }
+
+        .control-btn:active {
+            background: rgba(220, 20, 60, 0.9);
+            transform: scale(0.95);
+        }
+
+        #hud {
+            position: fixed;
+            top: 20px;
+            width: 100%;
+            display: none;
+            z-index: 50;
+        }
+
+        #hud.active {
+            display: block;
+        }
+
+        .health-container {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            margin-bottom: 10px;
+        }
+
+        .health-bar {
+            width: 40%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid #FFD700;
+            position: relative;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8B0000 0%, #DC143C 100%);
+            transition: width 0.3s;
+        }
+
+        .health-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 30px;
+            font-size: 0.8em;
+            color: #FFD700;
+        }
+
+        #levelInfo {
+            text-align: center;
+            font-size: 1em;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .gore-toggle {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border: 2px solid #FFD700;
+            font-size: 0.7em;
+            color: #FFD700;
+            cursor: pointer;
+            z-index: 50;
+        }
+
+        @media (max-width: 768px) {
+            .title { font-size: 1.5em; }
+            .menu-btn { font-size: 0.8em; padding: 15px 30px; }
+            .control-btn { width: 60px; height: 60px; font-size: 0.7em; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Menu -->
+    <div id="mainMenu" class="screen active">
+        <h1 class="title">⚔️ KNIGHT'S ASCENT ⚔️</h1>
+        <button class="menu-btn" onclick="game.showCustomize()">⚔️ CUSTOMIZE KNIGHT</button>
+        <button class="menu-btn" onclick="game.startGame()">🗡️ START CAMPAIGN</button>
+        <button class="menu-btn" onclick="game.showOptions()">⚙️ OPTIONS</button>
+    </div>
+
+    <!-- Customize Screen -->
+    <div id="customizeScreen" class="screen">
+        <h1 class="title">CUSTOMIZE YOUR KNIGHT</h1>
+        <div class="customize-grid">
+            <div class="custom-option">
+                <h3>ARMOR TYPE</h3>
+                <button class="custom-btn" onclick="game.setCustom('armor', 'templar')">TEMPLAR</button>
+                <button class="custom-btn" onclick="game.setCustom('armor', 'dark')">DARK KNIGHT</button>
+                <button class="custom-btn" onclick="game.setCustom('armor', 'gold')">GOLDEN</button>
+                <button class="custom-btn" onclick="game.setCustom('armor', 'dragon')">DRAGON SLAYER</button>
+            </div>
+            <div class="custom-option">
+                <h3>SWORD TYPE</h3>
+                <button class="custom-btn" onclick="game.setCustom('sword', 'one')">ONE-HANDED</button>
+                <button class="custom-btn" onclick="game.setCustom('sword', 'two')">TWO-HANDED</button>
+            </div>
+            <div class="custom-option">
+                <h3>ARMOR COLOR</h3>
+                <button class="custom-btn" onclick="game.setCustom('color', 'silver')">SILVER</button>
+                <button class="custom-btn" onclick="game.setCustom('color', 'gold')">GOLD</button>
+                <button class="custom-btn" onclick="game.setCustom('color', 'black')">BLACK</button>
+                <button class="custom-btn" onclick="game.setCustom('color', 'red')">RED</button>
+            </div>
+            <div class="custom-option">
+                <h3>CAPE COLOR</h3>
+                <button class="custom-btn" onclick="game.setCustom('cape', 'red')">RED</button>
+                <button class="custom-btn" onclick="game.setCustom('cape', 'blue')">BLUE</button>
+                <button class="custom-btn" onclick="game.setCustom('cape', 'purple')">PURPLE</button>
+                <button class="custom-btn" onclick="game.setCustom('cape', 'black')">BLACK</button>
+            </div>
+        </div>
+        <button class="menu-btn" onclick="game.showMenu()">⬅️ BACK</button>
+    </div>
+
+    <!-- Options Screen -->
+    <div id="optionsScreen" class="screen">
+        <h1 class="title">OPTIONS</h1>
+        <div class="customize-grid">
+            <div class="custom-option">
+                <h3>GORE MODE</h3>
+                <button class="custom-btn" onclick="game.setGore(true)">ENABLED 🩸</button>
+                <button class="custom-btn" onclick="game.setGore(false)">DISABLED</button>
+            </div>
+            <div class="custom-option">
+                <h3>DIFFICULTY</h3>
+                <button class="custom-btn" onclick="game.setDifficulty('normal')">NORMAL</button>
+                <button class="custom-btn" onclick="game.setDifficulty('hard')">HARD</button>
+                <button class="custom-btn" onclick="game.setDifficulty('brutal')">BRUTAL</button>
+            </div>
+        </div>
+        <button class="menu-btn" onclick="game.showMenu()">⬅️ BACK</button>
+    </div>
+
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div class="health-container">
+            <div class="health-bar">
+                <div class="health-fill" id="playerHealth" style="width: 100%"></div>
+                <div class="health-text">YOU</div>
+            </div>
+            <div class="health-bar">
+                <div class="health-fill" id="enemyHealth" style="width: 100%"></div>
+                <div class="health-text">ENEMY</div>
+            </div>
+        </div>
+        <div id="levelInfo">LEVEL 1: FIELD BATTLE</div>
+    </div>
+
+    <!-- Controls -->
+    <div id="controls">
+        <div class="control-group">
+            <div class="control-btn" id="leftBtn">←</div>
+            <div class="control-btn" id="rightBtn">→</div>
+        </div>
+        <div class="control-group">
+            <div class="control-btn" id="blockBtn">🛡️<br>BLOCK</div>
+            <div class="control-btn" id="dodgeBtn">↔️<br>DODGE</div>
+            <div class="control-btn" id="attackBtn">⚔️<br>ATTACK</div>
+        </div>
+    </div>
+
+    <script>
+        const game = {
+            canvas: null,
+            ctx: null,
+            customization: {
+                armor: 'templar',
+                sword: 'one',
+                color: 'silver',
+                cape: 'red'
+            },
+            gore: true,
+            difficulty: 'normal',
+            currentLevel: 0,
+            player: { x: 150, y: 400, health: 100, maxHealth: 100, stamina: 100, isBlocking: false, isAttacking: false, isDodging: false },
+            enemy: { x: 650, y: 400, health: 100, maxHealth: 100, isBlocking: false, isAttacking: false },
+            blood: [],
+            keys: {},
+            gameRunning: false,
+
+            levels: [
+                { name: 'FIELD BATTLE', bg: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/a479852528778d342fc3039cfcbfe12f', enemy: 'Peasant Knight', difficulty: 1 },
+                { name: 'VILLAGE SQUARE', bg: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/a2662d71b32b1a6ad73d78db07098e8b', enemy: 'Town Guard', difficulty: 1.3 },
+                { name: 'CASTLE COURTYARD', bg: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/11091d5c1a0be80919b4d87957931056', enemy: 'Royal Knight', difficulty: 1.6 },
+                { name: 'THRONE ROOM', bg: 'https://pub-b70cb36a6853407fa468c5d6dec16633.r2.dev/208307/gemini/generate_image/response/224003a466ee5c1e77e35c25c4618664', enemy: 'THE KING', difficulty: 2 }
+            ],
+
+            init() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.setupControls();
+                this.loadCustomization();
+            },
+
+            showMenu() {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('mainMenu').classList.add('active');
+                this.gameRunning = false;
+            },
+
+            showCustomize() {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('customizeScreen').classList.add('active');
+                this.updateCustomButtons();
+            },
+
+            showOptions() {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('optionsScreen').classList.add('active');
+            },
+
+            setCustom(type, value) {
+                this.customization[type] = value;
+                this.saveCustomization();
+                this.updateCustomButtons();
+            },
+
+            setGore(enabled) {
+                this.gore = enabled;
+                localStorage.setItem('gore', enabled);
+            },
+
+            setDifficulty(diff) {
+                this.difficulty = diff;
+                localStorage.setItem('difficulty', diff);
+            },
+
+            updateCustomButtons() {
+                document.querySelectorAll('.custom-btn').forEach(btn => btn.classList.remove('selected'));
+            },
+
+            saveCustomization() {
+                localStorage.setItem('customization', JSON.stringify(this.customization));
+            },
+
+            loadCustomization() {
+                const saved = localStorage.getItem('customization');
+                if (saved) this.customization = JSON.parse(saved);
+                this.gore = localStorage.getItem('gore') !== 'false';
+                this.difficulty = localStorage.getItem('difficulty') || 'normal';
+            },
+
+            startGame() {
+                this.currentLevel = 0;
+                this.loadLevel(0);
+            },
+
+            loadLevel(level) {
+                this.currentLevel = level;
+                this.player.health = this.player.maxHealth;
+                this.enemy.health = this.enemy.maxHealth;
+                this.enemy.x = this.canvas.width - 200;
+                this.player.x = 150;
+                this.blood = [];
+
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('hud').classList.add('active');
+                document.getElementById('levelInfo').textContent = `LEVEL ${level + 1}: ${this.levels[level].name}`;
+
+                this.gameRunning = true;
+                this.gameLoop();
+            },
+
+            setupControls() {
+                // Touch controls
+                ['left', 'right', 'attack', 'block', 'dodge'].forEach(action => {
+                    const btn = document.getElementById(action + 'Btn');
+                    if (btn) {
+                        btn.addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            this.handleAction(action, true);
+                        });
+                        btn.addEventListener('touchend', (e) => {
+                            e.preventDefault();
+                            this.handleAction(action, false);
+                        });
+                    }
+                });
+
+                // Keyboard
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'a') this.handleAction('left', true);
+                    if (e.key === 'd') this.handleAction('right', true);
+                    if (e.key === ' ') this.handleAction('attack', true);
+                    if (e.key === 's') this.handleAction('block', true);
+                    if (e.key === 'w') this.handleAction('dodge', true);
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    if (e.key === 'a') this.handleAction('left', false);
+                    if (e.key === 'd') this.handleAction('right', false);
+                    if (e.key === 's') this.handleAction('block', false);
+                });
+            },
+
+            handleAction(action, pressed) {
+                if (!this.gameRunning) return;
+
+                switch(action) {
+                    case 'left':
+                        if (pressed && this.player.x > 50) this.player.x -= 10;
+                        break;
+                    case 'right':
+                        if (pressed && this.player.x < this.canvas.width / 2) this.player.x += 10;
+                        break;
+                    case 'attack':
+                        if (pressed && !this.player.isAttacking) {
+                            this.player.isAttacking = true;
+                            this.playerAttack();
+                            setTimeout(() => this.player.isAttacking = false, 300);
+                        }
+                        break;
+                    case 'block':
+                        this.player.isBlocking = pressed;
+                        break;
+                    case 'dodge':
+                        if (pressed && !this.player.isDodging) {
+                            this.player.isDodging = true;
+                            this.player.x += 50;
+                            setTimeout(() => this.player.isDodging = false, 200);
+                        }
+                        break;
+                }
+            },
+
+            playerAttack() {
+                const distance = Math.abs(this.player.x - this.enemy.x);
+                const range = this.customization.sword === 'two' ? 120 : 80;
+
+                if (distance < range) {
+                    if (!this.enemy.isBlocking) {
+                        const damage = this.customization.sword === 'two' ? 15 : 10;
+                        this.enemy.health -= damage;
+                        this.addBlood(this.enemy.x, this.enemy.y);
+                        this.updateHealthBars();
+                    }
+                }
+            },
+
+            enemyAI() {
+                if (!this.gameRunning) return;
+
+                const distance = Math.abs(this.player.x - this.enemy.x);
+                const levelDiff = this.levels[this.currentLevel].difficulty;
+
+                // Simple AI logic
+                if (distance > 100) {
+                    this.enemy.x -= 2 * levelDiff;
+                } else {
+                    // Random attack or block
+                    const action = Math.random();
+                    if (action < 0.3 * levelDiff && !this.enemy.isAttacking) {
+                        this.enemy.isAttacking = true;
+                        this.enemyAttack();
+                        setTimeout(() => this.enemy.isAttacking = false, 300);
+                    } else if (action < 0.5 * levelDiff) {
+                        this.enemy.isBlocking = true;
+                        setTimeout(() => this.enemy.isBlocking = false, 500);
+                    }
+                }
+            },
+
+            enemyAttack() {
+                const distance = Math.abs(this.player.x - this.enemy.x);
+                if (distance < 100) {
+                    if (!this.player.isBlocking && !this.player.isDodging) {
+                        this.player.health -= 12;
+                        this.addBlood(this.player.x, this.player.y);
+                        this.updateHealthBars();
+                    }
+                }
+            },
+
+            addBlood(x, y) {
+                if (!this.gore) return;
+                for (let i = 0; i < 5; i++) {
+                    this.blood.push({
+                        x: x + Math.random() * 20 - 10,
+                        y: y + Math.random() * 20 - 10,
+                        vx: Math.random() * 4 - 2,
+                        vy: -Math.random() * 3,
+                        life: 60
+                    });
+                }
+            },
+
+            updateHealthBars() {
+                document.getElementById('playerHealth').style.width = (this.player.health / this.player.maxHealth * 100) + '%';
+                document.getElementById('enemyHealth').style.width = (this.enemy.health / this.enemy.maxHealth * 100) + '%';
+
+                if (this.player.health <= 0) {
+                    this.gameOver(false);
+                } else if (this.enemy.health <= 0) {
+                    this.levelComplete();
+                }
+            },
+
+            gameOver(won) {
+                this.gameRunning = false;
+                setTimeout(() => {
+                    alert(won ? 'VICTORY! You defeated all enemies!' : 'DEFEAT! Try again, warrior!');
+                    this.showMenu();
+                }, 500);
+            },
+
+            levelComplete() {
+                this.gameRunning = false;
+                setTimeout(() => {
+                    if (this.currentLevel < this.levels.length - 1) {
+                        alert(`Level ${this.currentLevel + 1} Complete! Prepare for the next battle!`);
+                        this.loadLevel(this.currentLevel + 1);
+                    } else {
+                        this.gameOver(true);
+                    }
+                }, 500);
+            },
+
+            gameLoop() {
+                if (!this.gameRunning) return;
+
+                // Clear canvas
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw background (simplified - real game would load images)
+                this.ctx.fillStyle = '#2a5f2a';
+                this.ctx.fillRect(0, this.canvas.height - 200, this.canvas.width, 200);
+
+                // Draw blood
+                this.blood.forEach((drop, i) => {
+                    drop.x += drop.vx;
+                    drop.y += drop.vy;
+                    drop.vy += 0.3;
+                    drop.life--;
+
+                    if (drop.life <= 0 || drop.y > this.canvas.height) {
+                        this.blood.splice(i, 1);
+                        return;
+                    }
+
+                    this.ctx.fillStyle = `rgba(139, 0, 0, ${drop.life / 60})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(drop.x, drop.y, 3, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+
+                // Draw player (simplified knight)
+                this.ctx.fillStyle = this.getColorCode(this.customization.color);
+                this.ctx.fillRect(this.player.x - 20, this.player.y - 60, 40, 60);
+                // Helmet
+                this.ctx.fillStyle = '#888';
+                this.ctx.fillRect(this.player.x - 15, this.player.y - 80, 30, 20);
+                // Sword
+                const swordLength = this.customization.sword === 'two' ? 50 : 35;
+                this.ctx.fillStyle = '#c0c0c0';
+                this.ctx.fillRect(this.player.x + 20, this.player.y - 60, 5, swordLength);
+
+                // Draw enemy
+                this.ctx.fillStyle = '#8B0000';
+                this.ctx.fillRect(this.enemy.x - 20, this.enemy.y - 60, 40, 60);
+                this.ctx.fillStyle = '#444';
+                this.ctx.fillRect(this.enemy.x - 15, this.enemy.y - 80, 30, 20);
+                this.ctx.fillStyle = '#c0c0c0';
+                this.ctx.fillRect(this.enemy.x - 25, this.enemy.y - 60, 5, 35);
+
+                // AI
+                if (Math.random() < 0.02) {
+                    this.enemyAI();
+                }
+
+                requestAnimationFrame(() => this.gameLoop());
+            },
+
+            getColorCode(color) {
+                const colors = {
+                    'silver': '#c0c0c0',
+                    'gold': '#FFD700',
+                    'black': '#1a1a1a',
+                    'red': '#8B0000'
+                };
+                return colors[color] || '#c0c0c0';
+            }
+        };
+
+        window.addEventListener('load', () => {
+            game.init();
+        });
+
+        window.addEventListener('resize', () => {
+            game.canvas.width = window.innerWidth;
+            game.canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
